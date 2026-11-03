@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Budget Tracker</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700&family=Instrument+Sans:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#eef2f6;--card:#fff;--ink:#14213d;--mut:#5c6b80;--line:#d9e0ea;--track:#dfe6ee;--acc:#2f5bea;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1420;--card:#161e2e;--ink:#e8edf7;--mut:#8d9bb3;--line:#27324a;--track:#222c42;--acc:#7ea2ff;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1420;--card:#161e2e;--ink:#e8edf7;--mut:#8d9bb3;--line:#27324a;--track:#222c42;--acc:#7ea2ff;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 "Instrument Sans",system-ui,sans-serif}
+main{max-width:860px;margin:0 auto;padding:24px 16px 72px}
+h1,.big input,.stats strong{font-family:"Bricolage Grotesque","Instrument Sans",system-ui,sans-serif;font-weight:700}
+h1{font-size:clamp(28px,6vw,40px);line-height:1.1;margin:0}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.top p{margin:6px 0 0;color:var(--mut);max-width:46ch}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px}
+button,select{font:inherit;color:inherit;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:7px 12px;cursor:pointer}
+button:hover,select:hover{border-color:var(--acc)}
+button.pri{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:700}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.big{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.big label{color:var(--mut)}
+.big input{font-size:clamp(30px,8vw,46px);width:min(100%,300px);border:0;border-bottom:2px dashed var(--line);background:transparent;color:var(--ink);padding:0}
+.big input:focus{outline:0;border-color:var(--acc)}
+.stack{display:flex;height:46px;border-radius:12px;overflow:hidden;background:var(--track);margin:16px 0 12px}
+.seg{position:relative;min-width:0;overflow:hidden;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;padding:0 8px;white-space:nowrap;transition:width .25s}
+.seg+.seg{border-left:2px solid var(--card)}
+.seg span{position:absolute;inset:0 auto 0 0;background:repeating-linear-gradient(45deg,rgba(0,0,0,.38) 0 3px,transparent 3px 7px)}
+.seg b{position:relative;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.stats div{padding:10px 12px;border-radius:12px;background:var(--bg)}
+.stats small{display:block;color:var(--mut)}
+.stats strong{font-size:19px}
+#list{display:grid;gap:14px;margin:18px 0}
+.empty{color:var(--mut);text-align:center;padding:24px}
+.alloc{background:var(--card);border:1px solid var(--line);border-left:8px solid var(--c);border-radius:16px;padding:16px}
+.sub{margin-top:10px;padding:12px;border-radius:12px;background:var(--bg);border-left:5px solid var(--c)}
+.head{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+.sw{width:32px;height:32px;border-radius:50%;background:var(--c);flex:none;position:relative;cursor:pointer;box-shadow:0 0 0 3px var(--card),0 0 0 4px var(--line);overflow:hidden}
+.sw input{position:absolute;inset:-8px;width:48px;height:48px;opacity:0;cursor:pointer}
+.name{flex:1;min-width:0;font:inherit;font-weight:700;font-size:17px;color:inherit;border:0;background:transparent;border-bottom:1px dashed transparent;padding:2px 0}
+.name:hover,.name:focus{border-color:var(--line);outline:0}
+.amt input{width:112px;font:inherit;color:inherit;text-align:right;border:1px solid var(--line);border-radius:8px;padding:5px 8px;background:var(--bg)}
+input[type=range]{-webkit-appearance:none;appearance:none;display:block;width:100%;height:12px;margin:6px 0;border-radius:99px;background:linear-gradient(90deg,var(--c) var(--p,0%),var(--track) var(--p,0%));cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:var(--card);border:5px solid var(--c);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--card);border:5px solid var(--c)}
+.meter{height:10px;border-radius:99px;background:var(--track);margin:10px 0 6px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--c);border-radius:99px;transition:width .3s}
+.meta{color:var(--mut);font-size:13px}
+.low>.meta{color:#d1432f;font-weight:700}
+.acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.acts button{font-size:13px;padding:5px 10px}
+.spend{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;padding:10px;border-radius:12px;background:var(--bg)}
+.spend[hidden]{display:none}
+.spend input{font:inherit;color:inherit;border:1px solid var(--line);background:var(--card);border-radius:8px;padding:7px 9px;min-width:0}
+.spend [name=amt]{width:120px}
+.spend [name=note]{flex:1;min-width:150px}
+.hint{width:100%;font-size:12px;color:var(--mut)}
+details{margin-top:8px;font-size:13px}
+summary{cursor:pointer;color:var(--mut)}
+.log{display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--line)}
+.log span{flex:1;min-width:0}
+.log em{color:var(--mut);font-style:normal}
+.log button{padding:2px 8px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw}
+.toast.on{opacity:1}
+.jsn{margin-top:18px;font-size:14px}
+.jsn textarea{width:100%;min-height:170px;margin:10px 0;font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;resize:vertical}
+.jbtns{display:flex;gap:8px;flex-wrap:wrap}
+.jsn p{margin:8px 0 0;color:var(--mut)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+<div class="top">
+<div><h1>Budget Tracker</h1><p>Split one budget into allocations, drag the sliders to adjust, and watch each one deplete as you spend.</p></div>
+<div class="tools"><select id="cur" aria-label="Currency"><option>USD</option><option>EUR</option><option>GBP</option><option>PHP</option><option>JPY</option><option>INR</option></select><button id="save" title="Save your budget as a .json file">Save JSON</button><button id="upload" title="Replace your budget with a saved .json file">Upload JSON</button><button id="split" title="Divide the main budget equally across all allocations">Split budget equally</button><button id="reset">Reset sample</button></div>
+</div>
+<section class="card">
+<div class="big"><label for="total">Main budget</label><input id="total" type="number" min="0" step="any"></div>
+<div class="stack" id="stack"></div>
+<div class="stats" id="stats"></div>
+</section>
+<div id="list"></div>
+<button class="pri" id="add">+ New allocation</button>
+<details class="card jsn" id="jpanel"><summary>Import or export JSON</summary>
+<p>Export includes every allocation, sub-allocation and spending entry. Importing replaces what’s on screen.</p>
+<textarea id="json" spellcheck="false" aria-label="Budget JSON" placeholder="Paste budget JSON here, then press Import"></textarea>
+<div class="jbtns"><button id="jcopy">Copy JSON</button><button class="pri" id="jimp">Import</button></div></details>
+<input type="file" id="jpick" accept=".json,application/json" hidden>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+const KEY="budget-tracker-v1",PAL=["#ef476f","#06a77d","#ffb703","#7b5cff","#ff7a45","#17a2c9","#c04cfd","#5a8f29"];
+const $=s=>document.querySelector(s),uid=()=>Math.random().toString(36).slice(2,9);
+const sum=(a,f)=>a.reduce((t,x)=>t+f(x),0),sd=n=>sum(n.spent,e=>e.amt),sa=n=>sum(n.subs||[],s=>s.amount),sall=n=>sd(n)+sum(n.subs||[],sd);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const mk=(name,amount,color,subs,spent)=>({id:uid(),name,amount,color,spent:spent||[],...(subs?{subs}:{})});
+const sample=()=>({cur:"USD",total:5000,items:[
+ mk("Housing",1800,PAL[0],[mk("Rent",1500,"#ff9f68"),mk("Utilities",300,"#ffc857")]),
+ mk("Food",800,PAL[1],[],[{id:uid(),amt:120,note:"Weekly groceries",t:Date.now()}]),
+ mk("Savings",1000,PAL[3],[]),mk("Fun",400,PAL[5],[])]});
+function load(){try{const r=JSON.parse(localStorage.getItem(KEY));if(r&&Array.isArray(r.items))return r}catch(e){}return sample()}
+let S=load(),openH=new Set(),tt;
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const fmt=v=>{try{return new Intl.NumberFormat(undefined,{style:"currency",currency:S.cur,maximumFractionDigits:2}).format(v)}catch(e){return(+v).toFixed(2)}};
+const find=id=>{for(const i of S.items){if(i.id===id)return{n:i};for(const s of i.subs||[])if(s.id===id)return{n:s,p:i}}};
+const stepOf=m=>m>=100000?100:m>=10000?10:1;
+const toast=m=>{const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("on"),2600)};
+const arm=b=>{if(b.dataset.arm)return 1;b.dataset.arm=1;const t=b.textContent;b.textContent="Sure?";setTimeout(()=>{delete b.dataset.arm;b.textContent=t},2500)};
+function limits(n,p){
+ if(p){const o=sa(p)-n.amount;return[sd(n),Math.max(sd(n),p.amount-o-sd(p))]}
+ const o=sum(S.items,i=>i.amount)-n.amount,m=sall(n);return[m,Math.max(m,S.total-o)]}
+function setAmt(n,p,v){
+ const[mn,mx]=limits(n,p);const c=Math.min(mx,Math.max(mn,+v||0));
+ if(c!==+v)toast(c===mx?`Limit reached: ${fmt(mx)} is all that’s left in the ${p?"parent allocation":"main budget"}.`:`Can’t go below ${fmt(mn)}: that’s already spent.`);
+ n.amount=Math.round(c*100)/100;
+ if(!p&&fit(n)&&c===+v)toast("Sub-allocations were scaled down to fit the new amount.")}
+function fit(n){
+ const subs=n.subs||[],pool=n.amount-sd(n),over=sa(n)-pool;
+ if(over<=.004)return false;
+ const fr=subs.map(s=>s.amount-sd(s)),tot=sum(fr,x=>x);
+ if(tot<=0)return false;
+ subs.forEach((s,i)=>s.amount=Math.round((s.amount-over*fr[i]/tot)*100)/100);
+ const r=sa(n)-pool;
+ if(r>0){const j=fr.indexOf(Math.max(...fr));subs[j].amount=Math.max(sd(subs[j]),Math.round((subs[j].amount-r)*100)/100)}
+ return true}
+function fair(total,mins){
+ const out=mins.map(()=>0);let rest=total,act=mins.map((_,i)=>i),sh=0;
+ for(;;){sh=act.length?rest/act.length:0;const bad=act.filter(i=>mins[i]>sh);if(!bad.length)break;bad.forEach(i=>{out[i]=mins[i];rest-=mins[i]});act=act.filter(i=>!bad.includes(i))}
+ const r=Math.floor(sh*100+1e-6)/100;act.forEach(i=>out[i]=r);
+ if(act.length)out[act[0]]=Math.round((out[act[0]]+rest-r*act.length)*100)/100;
+ return out}
+function split(total,list,min,label){
+ const v=fair(total,list.map(min));list.forEach((x,k)=>x.amount=v[k]);const sc=list.map(x=>x.subs?fit(x):false).some(Boolean)?" Sub-allocations were scaled down to fit.":"";
+ toast(Math.max(...v)-Math.min(...v)<=.01?`Split ${fmt(total)} equally across ${list.length} ${label}.${sc}`:`Split evenly where possible; some ${label} keep what’s already spent.${sc}`)}
+function log(n){
+ const all=[...n.spent.map(e=>({...e,src:""})),...(n.subs||[]).flatMap(s=>s.spent.map(e=>({...e,src:s.name})))].sort((a,b)=>b.t-a.t);
+ if(!all.length)return"";
+ return `<details data-d="${n.id}"${openH.has(n.id)?" open":""}><summary>Spending history (${all.length})</summary>${all.map(e=>`<div class="log"><span>${new Date(e.t).toLocaleDateString()}, ${esc(e.note||"no description")}${e.src?` <em>(${esc(e.src)})</em>`:""}</span><b>−${fmt(e.amt)}</b><button data-act="undo" data-e="${e.id}" title="Undo and refund" aria-label="Undo and refund">↩</button></div>`).join("")}</details>`}
+function nodeHTML(n,sub){
+ return `<article class="${sub?"sub":"alloc"}" data-id="${n.id}">
+<div class="head"><label class="sw" title="Change colour"><input type="color" data-f="color" value="${n.color}" aria-label="Colour"></label><input class="name" data-f="name" value="${esc(n.name)}" aria-label="Name"><div class="amt"><input type="number" data-f="amount" min="0" step="any" aria-label="Allocated amount"></div></div>
+<input type="range" class="sl" data-f="slider" aria-label="Allocation slider">
+<div class="meter"><i></i></div><div class="meta"></div>
+<div class="acts"><button data-act="spend">Spend</button>${sub?"":'<button data-act="addsub">+ Sub-allocation</button>'+(n.subs.length?'<button data-act="splitsub" title="Divide this allocation equally across its sub-allocations">Split equally</button>':"")}<button data-act="del">Delete</button></div>
+<form class="spend" hidden><input name="amt" type="number" min="0" step="any" placeholder="Amount" required aria-label="Amount to spend"><input name="note" placeholder="Description (optional)" aria-label="Description"><button class="pri">Deplete</button><div class="hint"></div></form>
+${sub?"":`<div class="subs">${n.subs.map(s=>nodeHTML(s,1)).join("")}</div>`}${log(n)}</article>`}
+function render(){$("#list").innerHTML=S.items.map(i=>nodeHTML(i)).join("")||'<p class="empty">No allocations yet. Add one to start splitting your budget.</p>';paint()}
+function paint(){
+ const al=sum(S.items,i=>i.amount),sp=sum(S.items,sall),t=S.total||1,ti=$("#total");
+ if(document.activeElement!==ti)ti.value=S.total;
+ $("#stack").innerHTML=S.items.filter(i=>i.amount>0).map(i=>{const w=i.amount/t*100;return `<div class="seg" style="width:${w}%;background:${i.color}" title="${esc(i.name)}: ${fmt(i.amount)}"><span style="width:${sall(i)/i.amount*100}%"></span>${w>9?`<b>${esc(i.name)}</b>`:""}</div>`}).join("")+'<div class="seg" style="flex:1"></div>';
+ $("#stats").innerHTML=[["Allocated",al],["Unallocated",S.total-al],["Spent",sp],["Left to spend",al-sp]].map(([k,v])=>`<div><small>${k}</small><strong>${fmt(v)}</strong></div>`).join("");
+ document.querySelectorAll("article[data-id]").forEach(a=>{
+  const{n,p}=find(a.dataset.id),q=s=>a.querySelector(":scope>"+s),max=Math.max(1,p?p.amount:S.total),used=sall(n),left=n.amount-used;
+  a.style.setProperty("--c",n.color);
+  const r=q(".sl");r.max=max;r.step=stepOf(max);r.value=n.amount;r.style.setProperty("--p",n.amount/max*100+"%");
+  const ai=q(".head .amt input");if(document.activeElement!==ai)ai.value=+n.amount.toFixed(2);
+  q(".meter i").style.width=(n.amount?Math.max(0,left)/n.amount*100:0)+"%";
+  a.classList.toggle("low",n.amount>0&&left/n.amount<.15);
+  const hasSubs=!p&&n.subs.length,free=p?n.amount-sd(n):n.amount-sa(n)-sd(n);
+  q(".meta").textContent=`${fmt(left)} left of ${fmt(n.amount)}, ${fmt(used)} spent, ${(n.amount/t*100).toFixed(1)}% of main budget`+(hasSubs?`, ${fmt(sa(n))} in sub-allocations`:"");
+  q(".spend .hint").textContent=`Available to spend: ${fmt(free)}`+(hasSubs?" (unassigned part only; spend the rest from each sub-allocation)":"")})}
+const upd=full=>{save();full?render():paint()};
+const L=$("#list");
+L.addEventListener("input",e=>{const f=e.target.dataset.f;if(f!=="slider"&&f!=="color")return;const{n,p}=find(e.target.closest("article").dataset.id);if(f==="color")n.color=e.target.value;else setAmt(n,p,e.target.value);upd()});
+L.addEventListener("change",e=>{const f=e.target.dataset.f;if(!f||f==="slider"||f==="color")return;const{n,p}=find(e.target.closest("article").dataset.id);if(f==="name")n.name=e.target.value.trim()||"Untitled";else setAmt(n,p,e.target.value);upd()});
+L.addEventListener("click",e=>{
+ const b=e.target.closest("[data-act]");if(!b)return;const act=b.dataset.act;
+ if(act==="undo"){const id=b.dataset.e;S.items.forEach(i=>[i,...i.subs].forEach(x=>x.spent=x.spent.filter(s=>s.id!==id)));return upd(1)}
+ const a=b.closest("article"),{n,p}=find(a.dataset.id);
+ if(act==="spend"){const f=a.querySelector(":scope>.spend");f.hidden=!f.hidden;if(!f.hidden)f.elements.amt.focus();return}
+ if(act==="addsub"){n.subs.push(mk("New sub-allocation",0,PAL[(n.subs.length+4)%PAL.length]));return upd(1)}
+ if(act==="splitsub"){if(sa(n)>0&&!arm(b))return;split(n.amount-sd(n),n.subs,sd,"sub-allocations");return upd()}
+ if(act==="del"){if(!arm(b))return;if(p)p.subs=p.subs.filter(s=>s!==n);else S.items=S.items.filter(s=>s!==n);upd(1)}});
+L.addEventListener("submit",e=>{
+ e.preventDefault();const f=e.target,{n,p}=find(f.closest("article").dataset.id),amt=+f.elements.amt.value,av=p?n.amount-sd(n):n.amount-sa(n)-sd(n);
+ if(!(amt>0))return toast("Enter an amount above zero.");
+ if(amt>av+1e-9)return toast(`Only ${fmt(av)} is available here.`);
+ n.spent.push({id:uid(),amt,note:f.elements.note.value.trim(),t:Date.now()});openH.add(n.id);upd(1)});
+L.addEventListener("toggle",e=>{const d=e.target.dataset&&e.target.dataset.d;if(d)e.target.open?openH.add(d):openH.delete(d)},true);
+$("#total").addEventListener("change",e=>{const al=sum(S.items,i=>i.amount),v=Math.max(0,+e.target.value||0);if(v<al)toast(`Can’t go below ${fmt(al)}, which is already allocated.`);S.total=Math.max(v,al);e.target.value=S.total;upd()});
+$("#cur").addEventListener("change",e=>{S.cur=e.target.value;upd()});
+$("#add").onclick=()=>{S.items.push(mk("New allocation",0,PAL[S.items.length%PAL.length],[]));upd(1);const l=L.lastElementChild;l.scrollIntoView({behavior:"smooth",block:"center"});l.querySelector(".name").select()};
+$("#split").onclick=e=>{if(!S.items.length)return toast("Add an allocation first.");if(sum(S.items,i=>i.amount)>0&&!arm(e.currentTarget))return;split(S.total,S.items,sall,"allocations");upd()};
+$("#reset").onclick=e=>{if(!arm(e.currentTarget))return;S=sample();$("#cur").value=S.cur;upd(1)};
+if(!["USD","EUR","GBP","PHP","JPY","INR"].includes(S.cur))S.cur="USD";
+const CURS=["USD","EUR","GBP","PHP","JPY","INR"];let DL=null;
+const exportData=()=>({app:"budget-tracker",version:1,cur:S.cur,total:S.total,items:S.items});
+const fillJson=()=>{$("#json").value=JSON.stringify(exportData(),null,2)};
+function clean(d){
+ if(!d||!Array.isArray(d.items))throw new Error("Expected an object with an “items” list.");
+ const num=x=>Number.isFinite(+x)?Math.max(0,Math.round(+x*100)/100):0,col=(c,i)=>/^#[0-9a-f]{6}$/i.test(c)?c:PAL[i%PAL.length];
+ const spent=l=>(Array.isArray(l)?l:[]).map(e=>({id:uid(),amt:num(e&&e.amt),note:String(e&&e.note||"").slice(0,200),t:Number.isFinite(+(e&&e.t))?+e.t:Date.now()})).filter(e=>e.amt>0);
+ const node=(x,i,top)=>{x=x||{};const n=mk(String(x.name||"Untitled").slice(0,80),num(x.amount),col(x.color,i),top?[]:undefined,spent(x.spent));if(top)n.subs=(Array.isArray(x.subs)?x.subs:[]).map((s,j)=>node(s,i+j+3,0));return n};
+ const items=d.items.map((x,i)=>node(x,i,1));
+ items.forEach(n=>{n.subs.forEach(s=>s.amount=Math.max(s.amount,sd(s)));n.amount=Math.max(n.amount,sall(n));fit(n)});
+ return{cur:CURS.includes(d.cur)?d.cur:"USD",total:Math.max(num(d.total),sum(items,i=>i.amount)),items}}
+$("#jpanel").addEventListener("toggle",e=>{if(e.target.open)fillJson()});
+$("#save").onclick=async()=>{if(!DL){fillJson();$("#jpanel").open=true;$("#json").select();return toast("Downloads aren’t available here. Copy the JSON from the box below instead.")}try{await DL.save({filename:`budget-${new Date().toISOString().slice(0,10)}.json`,data:JSON.stringify(exportData(),null,2)});toast("Download started.")}catch(e){if(!e||e.code!=="declined")toast("Couldn’t start the download. Try Copy JSON instead.")}};
+$("#jcopy").onclick=async()=>{fillJson();const t=$("#json");try{await navigator.clipboard.writeText(t.value);toast("Copied JSON to clipboard.")}catch(e){t.select();let ok=false;try{ok=document.execCommand("copy")}catch(_){}toast(ok?"Copied JSON to clipboard.":"Couldn’t copy automatically. The JSON is selected, so copy it manually.")}};
+function applyJson(txt){let d,c;try{d=JSON.parse(txt)}catch(err){return toast("That isn’t valid JSON. Check for missing commas or brackets.")}try{c=clean(d)}catch(err){return toast(err.message)}S=c;$("#cur").value=S.cur;upd(1);toast(`Imported ${S.items.length} allocation${S.items.length===1?"":"s"}.`+(S.total>(+d.total||0)?" The main budget was raised to cover them.":""))}
+$("#upload").onclick=()=>$("#jpick").click();
+$("#jpick").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{$("#json").value=t;applyJson(t)}).catch(()=>toast("Couldn’t read that file."));e.target.value=""});
+$("#jimp").onclick=e=>{
+ let d;try{d=JSON.parse($("#json").value)}catch(err){return toast("That isn’t valid JSON. Check for missing commas or brackets.")}
+ let c;try{c=clean(d)}catch(err){return toast(err.message)}
+ if(!arm(e.currentTarget))return;
+ S=c;$("#cur").value=S.cur;upd(1);toast(`Imported ${S.items.length} allocation${S.items.length===1?"":"s"}.`+(S.total>(+d.total||0)?" The main budget was raised to cover them.":""))};
+try{window.claude&&claude.use&&claude.use("downloads").then(d=>{DL=d}).catch(()=>{})}catch(e){}
+$("#cur").value=S.cur;render();
+</script>
+</body>
+</html>
